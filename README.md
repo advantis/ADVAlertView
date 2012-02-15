@@ -1,0 +1,1 @@
+Do you really need some sort of README for such a simple class? ;)
