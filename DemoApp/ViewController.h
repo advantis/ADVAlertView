@@ -1,5 +1,5 @@
 //
-//	Copyright © 2012 Yuri Kotov
+//  Copyright © 2012 Yuri Kotov
 //
 
 #import <UIKit/UIKit.h>
