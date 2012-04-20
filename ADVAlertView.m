@@ -114,10 +114,10 @@ static inline BOOL ProtocolContainsSelector (Protocol *protocol, SEL selector)
         [_realDelegate alertView:alertView clickedButtonAtIndex:buttonIndex];
     }
 
-    ADVAlertViewAction action = [_actions objectAtIndex:buttonIndex];
-    if ([NSNull null] != (id) action)
+    id action = [_actions objectAtIndex:buttonIndex];
+    if ([NSNull null] != action)
     {
-        action(buttonIndex);
+        ((ADVAlertViewAction)action)(buttonIndex);
     }
 }
 
