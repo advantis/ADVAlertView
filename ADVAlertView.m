@@ -16,7 +16,7 @@
 
 static inline BOOL ProtocolContainsSelector (Protocol *protocol, SEL selector)
 {
-    return sel_isEqual(selector, protocol_getMethodDescription(protocol, selector, NO, YES).name);
+    return NULL != protocol_getMethodDescription(protocol, selector, NO, YES).name;
 }
 
 @implementation ADVAlertView
