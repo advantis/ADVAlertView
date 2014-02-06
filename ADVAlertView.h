@@ -7,7 +7,7 @@
 
 #import <UIKit/UIKit.h>
 
-typedef void(^ADVAlertViewAction) (NSInteger buttonIndex);
+typedef void(^ADVAlertViewAction) ();
 
 @interface ADVAlertView : UIAlertView <UIAlertViewDelegate>
 

@@ -8,60 +8,50 @@
 #import "ADVAlertView.h"
 #import <objc/runtime.h>
 
-#if __has_feature(objc_arc_weak)
-    #define __desirable_weak    __weak
-#else
-    #define __desirable_weak    __unsafe_unretained
-#endif
-
 static inline BOOL ProtocolContainsSelector (Protocol *protocol, SEL selector)
 {
     return NULL != protocol_getMethodDescription(protocol, selector, NO, YES).name;
 }
 
+@interface ADVAlertView ()
+@property (nonatomic, strong) NSMutableArray *actions;
+@property (nonatomic, weak) id<UIAlertViewDelegate> trueDelegate;
+@end
+
 @implementation ADVAlertView
-{
-    NSMutableArray *_actions;
-    __desirable_weak id _realDelegate;
-}
 
 #pragma mark - ADVAlertView
 - (NSInteger) addButtonWithTitle:(NSString *)title action:(ADVAlertViewAction)action
 {
-    NSInteger index = [super addButtonWithTitle:title];
-    if (action)
-    {
-        id object = [action copy];
-        [_actions insertObject:object atIndex:index];
-        #if !__has_feature(objc_arc)
-        [object release];
-        #endif
-    }
-    else
-    {
-        [_actions insertObject:[NSNull null] atIndex:index];
-    }
-    return index;
+	NSInteger index = [super addButtonWithTitle:title];
+	self.actions[index] = action ?: (ADVAlertViewAction)^{};
+	return index;
+}
+
+/**
+* UIAlertView performs a series of "respondsToSelector" calls on delegate to
+* determine which of the optional protocol methods it implements and cache
+* this info. Therefore we need to force it to update this info for a new delegate.
+*/
+- (void) refreshSupportedOptionalMethods
+{
+	super.delegate = nil;
+	super.delegate = self;
 }
 
 #pragma mark - UIAlertView
-- (id) delegate
+- (id<UIAlertViewDelegate>) delegate
 {
-    return _realDelegate;
+    return self.trueDelegate;
 }
 
-- (void) setDelegate:(id)delegate
+- (void) setDelegate:(id<UIAlertViewDelegate>)delegate
 {
-    if (delegate != _realDelegate && delegate != self)
-    {
-        _realDelegate = delegate;
-
-        // UIAlertView performs a series of "respondsToSelector" calls on delegate to
-        // determine which of the optional protocol methods it implements and cache
-        // this info. Therefore we need to force it to update this info for a new delegate.
-        super.delegate = nil;
-        super.delegate = self;
-    }
+	if (delegate != self.trueDelegate && delegate != self)
+	{
+		self.trueDelegate = delegate;
+		[self refreshSupportedOptionalMethods];
+	}
 }
 
 - (NSInteger) addButtonWithTitle:(NSString *)title
@@ -86,7 +76,7 @@ static inline BOOL ProtocolContainsSelector (Protocol *protocol, SEL selector)
     BOOL responds = [super respondsToSelector:selector];
     if (!responds && ProtocolContainsSelector(@protocol(UIAlertViewDelegate), selector))
     {
-        responds = [_realDelegate respondsToSelector:selector];
+        responds = [self.trueDelegate respondsToSelector:selector];
     }
     return responds;
 }
@@ -94,31 +84,22 @@ static inline BOOL ProtocolContainsSelector (Protocol *protocol, SEL selector)
 - (id) forwardingTargetForSelector:(SEL)selector
 {
     return ProtocolContainsSelector(@protocol(UIAlertViewDelegate), selector)
-            ? _realDelegate
+            ? self.trueDelegate
             : [super forwardingTargetForSelector:selector];
 }
-
-#if !__has_feature(objc_arc)
-- (void)dealloc
-{
-    [_actions release];
-    [super dealloc];
-}
-#endif
 
 #pragma mark - UIAlertViewDelegate
 - (void) alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    if ([_realDelegate respondsToSelector:_cmd])
+    if ([self.trueDelegate respondsToSelector:_cmd])
     {
-        [_realDelegate alertView:alertView clickedButtonAtIndex:buttonIndex];
+        [self.trueDelegate alertView:alertView clickedButtonAtIndex:buttonIndex];
     }
 
-    id action = [_actions objectAtIndex:buttonIndex];
-    if ([NSNull null] != action)
-    {
-        ((ADVAlertViewAction)action)(buttonIndex);
-    }
+	if (buttonIndex < [self.actions count])
+	{
+		((ADVAlertViewAction)self.actions[buttonIndex])();
+	}
 }
 
 @end

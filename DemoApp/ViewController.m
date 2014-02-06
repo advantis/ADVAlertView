@@ -15,9 +15,8 @@
     ADVAlertView *alertView = [ADVAlertView new];
     alertView.title = @"Title";
     alertView.message = @"Message";
-    [alertView addButtonWithTitle:@"Action" action:^(NSInteger buttonIndex)
-    {
-       NSLog(@"button index: %d", buttonIndex);
+    [alertView addButtonWithTitle:@"Action" action:^{
+       NSLog(@"%@", NSStringFromSelector(_cmd));
     }];
     [alertView addButtonWithTitle:@"Cancel"];
     [alertView show];
